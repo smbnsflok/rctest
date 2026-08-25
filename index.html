@@ -98,10 +98,34 @@
       <p>Test number is <code>+44 7700 900123</code>, inside Ofcom's reserved range for testing &mdash; it is not a live line.</p>
     </div>
 
-    <h2>Number format variants</h2>
+    <h2>Interstitial test &mdash; run this one first</h2>
+    <p class="expect" style="margin: -4px 0 12px;">Variants A&ndash;D below are all confirmed working, so the number format is settled. The open question is whether <code>source=pwa</code> suppresses the &ldquo;download the app / open in browser&rdquo; screen.</p>
 
     <div class="test">
-      <span class="label">A &middot; E.164 digits, no plus &mdash; expected best</span><br>
+      <span class="label">F &middot; source=pwa</span><br>
+      <a href="https://app.ringcentral.com/r/dialer?number=447700900123&amp;source=pwa" target="_blank" rel="noopener" data-test="F">https://app.ringcentral.com/r/dialer?number=447700900123&amp;source=pwa</a>
+      <p class="expect">Taken from the PWA manifest's own <code>start_url</code> (<code>/?source=pwa</code>). <strong>The only thing to record: did the app-chooser screen appear, or did it go straight to the dialer?</strong> Compare against variant A, which is identical apart from this parameter.</p>
+    </div>
+
+    <h2>Direct scheme &mdash; bypasses the bridge page entirely</h2>
+    <p class="expect" style="margin: -4px 0 12px;">Requires the RingCentral <strong>desktop</strong> app. These skip <code>app.ringcentral.com</code> altogether, so the &ldquo;download the app&rdquo; interstitial cannot appear. Handoff goes through the OS, so the browser does not matter.</p>
+
+    <div class="test">
+      <span class="label">G &middot; plain href</span><br>
+      <a href="rcapp://r/dialer?number=447700900123" data-test="G">rcapp://r/dialer?number=447700900123</a>
+      <p class="expect">Standard anchor. RingCentral's docs warn Chrome may not fire custom schemes this way.</p>
+    </div>
+
+    <div class="test">
+      <span class="label">H &middot; JS navigation &mdash; same URI</span><br>
+      <a href="rcapp://r/dialer?number=447700900123" data-test="H" data-js="1">rcapp://r/dialer?number=447700900123</a>
+      <p class="expect">Identical URI, but navigation is performed in JavaScript from inside the click handler. The log below will report whether a handler was found.</p>
+    </div>
+
+    <h2>Number format variants &mdash; already confirmed working</h2>
+
+    <div class="test">
+      <span class="label">A &middot; E.164 digits, no plus &mdash; baseline for comparison</span><br>
       <a href="https://app.ringcentral.com/r/dialer?number=447700900123" target="_blank" rel="noopener" data-test="A">https://app.ringcentral.com/r/dialer?number=447700900123</a>
       <p class="expect">Matches RingCentral's own documented example format (<code>number=16501112222</code>). Start here.</p>
     </div>
@@ -172,8 +196,40 @@
       console.log('[rc-test]', msg);
     }
 
+    // Launch a custom URI scheme from JS and report whether anything handled it.
+    //
+    // The page never navigates: the browser recognises `rcapp:` as an external
+    // scheme, hands it to the OS, and leaves the document where it is. So there
+    // is no load event and no error to catch — success and failure look
+    // identical from the page's point of view.
+    //
+    // The workaround is to watch for the side effect of a successful handoff:
+    // when another app takes over, this window loses focus and the page is
+    // hidden. If neither happens within the timeout, nothing claimed the scheme.
+    function launchScheme(uri, label) {
+      var handled = false;
+      function markHandled() { handled = true; }
+
+      // `once` auto-removes these, so repeat clicks don't stack listeners.
+      window.addEventListener('blur', markHandled, { once: true });
+      document.addEventListener('visibilitychange', markHandled, { once: true });
+
+      // Assigning location.href inside the click handler keeps the user gesture
+      // attached to the navigation, which is what Chrome wants before it will
+      // release an external scheme.
+      window.location.href = uri;
+
+      setTimeout(function () {
+        window.removeEventListener('blur', markHandled);
+        document.removeEventListener('visibilitychange', markHandled);
+        stamp(handled
+          ? '        ' + label + ': handler found — an app took focus'
+          : '        ' + label + ': NO handler — page never lost focus (app not installed?)');
+      }, 1500);
+    }
+
     document.querySelectorAll('a[data-test]').forEach(function (a) {
-      a.addEventListener('click', function () {
+      a.addEventListener('click', function (e) {
         var href = a.getAttribute('href');
         var t = (performance.now() / 1000).toFixed(1);
         stamp('[' + t + 's] clicked ' + a.dataset.test + ' -> ' + href);
@@ -182,6 +238,11 @@
         // this is what makes variant C's space visible rather than invisible.
         var parsed = new URL(href, location.href).searchParams.get('number');
         stamp('        app receives number = ' + (parsed === null ? '(none)' : JSON.stringify(parsed)));
+
+        if (a.dataset.js) {
+          e.preventDefault();          // stop the anchor firing the URI as well
+          launchScheme(href, a.dataset.test);
+        }
       });
     });
 
