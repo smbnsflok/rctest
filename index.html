@@ -3,29 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RingCentral Click-to-Dial Test</title>
-  <meta name="description" content="Diagnostic page for RingCentral click-to-dial link handling">
+  <title>RingCentral Dialer Deeplink Test</title>
+  <meta name="description" content="Isolating the number format for the RingCentral web dialer deeplink">
   <style>
     :root {
       --bg: #ffffff; --fg: #1a1a1a; --muted: #666; --line: #e0e0e0;
-      --card: #f7f7f8; --accent: #0b5cad; --warn-bg: #fff8e6; --warn-line: #e0c068;
+      --card: #f7f7f8; --accent: #0b5cad; --note-bg: #eef4fb; --note-line: #b8cfe8;
       --ok: #1a7f4b; --bad: #b3261e;
     }
     @media (prefers-color-scheme: dark) {
       :root {
         --bg: #16171a; --fg: #e8e8ea; --muted: #9a9aa0; --line: #303136;
-        --card: #1e2024; --accent: #6fb3f2; --warn-bg: #2a2417; --warn-line: #6b5a2a;
+        --card: #1e2024; --accent: #6fb3f2; --note-bg: #1a2330; --note-line: #2f4a68;
         --ok: #5cc98a; --bad: #f2837a;
       }
     }
     :root[data-theme="dark"] {
       --bg: #16171a; --fg: #e8e8ea; --muted: #9a9aa0; --line: #303136;
-      --card: #1e2024; --accent: #6fb3f2; --warn-bg: #2a2417; --warn-line: #6b5a2a;
+      --card: #1e2024; --accent: #6fb3f2; --note-bg: #1a2330; --note-line: #2f4a68;
       --ok: #5cc98a; --bad: #f2837a;
     }
     :root[data-theme="light"] {
       --bg: #ffffff; --fg: #1a1a1a; --muted: #666; --line: #e0e0e0;
-      --card: #f7f7f8; --accent: #0b5cad; --warn-bg: #fff8e6; --warn-line: #e0c068;
+      --card: #f7f7f8; --accent: #0b5cad; --note-bg: #eef4fb; --note-line: #b8cfe8;
       --ok: #1a7f4b; --bad: #b3261e;
     }
 
@@ -34,38 +34,39 @@
       font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
       margin: 0; padding: 0 20px;
     }
-    main { max-width: 780px; margin: 40px auto 80px; }
-    h1 { font-size: 1.6rem; margin: 0 0 6px; }
-    h2 { font-size: 1.1rem; margin: 36px 0 4px; }
-    .sub { color: var(--muted); margin: 0 0 28px; }
-    .hint { color: var(--muted); font-size: 0.9rem; margin: 2px 0 14px; }
+    main { max-width: 720px; margin: 40px auto 80px; }
+    h1 { font-size: 1.55rem; margin: 0 0 6px; }
+    h2 { font-size: 1.05rem; margin: 34px 0 10px; }
+    .sub { color: var(--muted); margin: 0 0 24px; }
+
+    .note {
+      background: var(--note-bg); border: 1px solid var(--note-line);
+      border-radius: 8px; padding: 12px 16px; margin: 0 0 26px; font-size: 0.92rem;
+    }
+    .note p { margin: 0 0 8px; }
+    .note p:last-child { margin: 0; }
 
     .test {
       background: var(--card); border: 1px solid var(--line);
-      border-radius: 8px; padding: 16px; margin: 0 0 14px;
+      border-radius: 8px; padding: 16px; margin: 0 0 12px;
+    }
+    .label {
+      display: inline-block; font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 8px;
     }
     .test a {
-      color: var(--accent); font-weight: 600; font-size: 1.05rem;
-      word-break: break-all;
+      color: var(--accent); font-weight: 600; font-size: 1rem;
+      word-break: break-all; display: inline-block;
     }
+    .expect { font-size: 0.88rem; color: var(--muted); margin: 10px 0 0; }
     code {
       font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
       background: var(--bg); border: 1px solid var(--line);
       padding: 1px 5px; border-radius: 4px; word-break: break-all;
     }
-    .label {
-      display: inline-block; font-size: 0.72rem; font-weight: 700;
-      letter-spacing: 0.04em; text-transform: uppercase;
-      color: var(--muted); margin-bottom: 6px;
-    }
-    .expect { font-size: 0.9rem; color: var(--muted); margin: 10px 0 0; }
 
-    .note {
-      background: var(--warn-bg); border: 1px solid var(--warn-line);
-      border-radius: 8px; padding: 12px 16px; margin: 0 0 14px; font-size: 0.92rem;
-    }
-
-    table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+    table { border-collapse: collapse; width: 100%; font-size: 0.89rem; }
     td { padding: 5px 10px 5px 0; vertical-align: top; border-bottom: 1px solid var(--line); }
     td:first-child { color: var(--muted); white-space: nowrap; width: 1%; }
     td:last-child { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; }
@@ -74,7 +75,7 @@
 
     #log {
       background: var(--card); border: 1px solid var(--line); border-radius: 8px;
-      padding: 12px 16px; min-height: 60px;
+      padding: 12px 16px; min-height: 56px;
       font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
       white-space: pre-wrap; word-break: break-all;
     }
@@ -89,56 +90,46 @@
 </head>
 <body>
   <main id="main">
-    <h1>RingCentral Click-to-Dial Test</h1>
-    <p class="sub">Click each link in order and note what happens. Screenshot the diagnostics and click log at the bottom when finished.</p>
-
-    <h2>1 &mdash; Desktop app scheme (<code>rcapp://</code>)</h2>
-    <p class="hint">Only works if the RingCentral <strong>desktop</strong> app is installed. A PWA cannot register this scheme.</p>
-
-    <div class="test">
-      <span class="label">1a &middot; encoded plus</span><br>
-      <a href="rcapp://r/dialer?number=%2B447700900123" data-test="1a">rcapp://r/dialer?number=%2B447700900123</a>
-      <p class="expect">Expected if desktop app present: RingCentral opens with the number in the dialer.</p>
-    </div>
-
-    <div class="test">
-      <span class="label">1b &middot; no plus</span><br>
-      <a href="rcapp://r/dialer?number=447700900123" data-test="1b">rcapp://r/dialer?number=447700900123</a>
-      <p class="expect">Tests whether the leading + is required in the parameter.</p>
-    </div>
-
-    <div class="test">
-      <span class="label">1c &middot; alternate path</span><br>
-      <a href="rcapp://r/call?number=%2B447700900123" data-test="1c">rcapp://r/call?number=%2B447700900123</a>
-      <p class="expect">The dialer route may be <code>r/call</code> rather than <code>r/dialer</code> &mdash; unconfirmed, testing both.</p>
-    </div>
-
-    <h2>2 &mdash; Telephone scheme (<code>tel:</code>)</h2>
-    <p class="hint">Routes to the OS default telephony handler. RingCentral's PWA manifest does <strong>not</strong> declare a <code>tel:</code> protocol handler, so this will likely open FaceTime on macOS.</p>
-
-    <div class="test">
-      <span class="label">2a &middot; tel with plus</span><br>
-      <a href="tel:+447700900123" data-test="2a">tel:+447700900123</a>
-      <p class="expect">Note <em>which application</em> opens &mdash; that identifies the current OS default.</p>
-    </div>
-
-    <h2>3 &mdash; Web / PWA links (<code>https://</code>)</h2>
-    <p class="hint">The RingCentral PWA manifest declares no <code>scope</code>, so it defaults to the whole <code>app.ringcentral.com</code> origin. If the PWA is installed, links to that origin should open <em>inside the PWA window</em> rather than a browser tab.</p>
-
-    <div class="test">
-      <span class="label">3a &middot; control &mdash; origin root</span><br>
-      <a href="https://app.ringcentral.com/" target="_blank" rel="noopener" data-test="3a">https://app.ringcentral.com/</a>
-      <p class="expect"><strong>This is the key test.</strong> Did it open in the standalone PWA window, or in a normal browser tab? That tells us whether PWA link capture works at all on this machine.</p>
-    </div>
-
-    <div class="test">
-      <span class="label">3b &middot; candidate dialer deeplink &mdash; unverified</span><br>
-      <a href="https://app.ringcentral.com/dialer?number=%2B447700900123" target="_blank" rel="noopener" data-test="3b">https://app.ringcentral.com/dialer?number=%2B447700900123</a>
-      <p class="expect">This URL format is a <strong>guess</strong> and is not from RingCentral's documentation. A 404 or a redirect to the main app is the expected failure &mdash; it does not invalidate test 3a.</p>
-    </div>
+    <h1>RingCentral Dialer Deeplink Test</h1>
+    <p class="sub">Route is fixed at <code>/r/dialer</code>. The only variable is how the phone number is encoded.</p>
 
     <div class="note">
-      <strong>Note on 3b:</strong> replace this URL once the documented deeplink format is confirmed. If no such URL exists, server-side RingOut via the REST API is the only client-agnostic route.
+      <p><strong>How to run:</strong> click each link in order. After each one, note whether the RingCentral app opened <em>and</em> whether the number landed in the dialer correctly. Return here with the back button between tests.</p>
+      <p>Test number is <code>+44 7700 900123</code>, inside Ofcom's reserved range for testing &mdash; it is not a live line.</p>
+    </div>
+
+    <h2>Number format variants</h2>
+
+    <div class="test">
+      <span class="label">A &middot; E.164 digits, no plus &mdash; expected best</span><br>
+      <a href="https://app.ringcentral.com/r/dialer?number=447700900123" target="_blank" rel="noopener" data-test="A">https://app.ringcentral.com/r/dialer?number=447700900123</a>
+      <p class="expect">Matches RingCentral's own documented example format (<code>number=16501112222</code>). Start here.</p>
+    </div>
+
+    <div class="test">
+      <span class="label">B &middot; encoded plus (%2B)</span><br>
+      <a href="https://app.ringcentral.com/r/dialer?number=%2B447700900123" target="_blank" rel="noopener" data-test="B">https://app.ringcentral.com/r/dialer?number=%2B447700900123</a>
+      <p class="expect">The app receives a literal <code>+447700900123</code>. This is the correct way to send a plus in a query string.</p>
+    </div>
+
+    <div class="test">
+      <span class="label">C &middot; raw plus &mdash; expected to fail</span><br>
+      <a href="https://app.ringcentral.com/r/dialer?number=+447700900123" target="_blank" rel="noopener" data-test="C">https://app.ringcentral.com/r/dialer?number=+447700900123</a>
+      <p class="expect">A raw <code>+</code> in a query string decodes to a <strong>space</strong>, so the app likely receives <code>" 447700900123"</code>. Included to confirm this is the failure mode &mdash; if this one works, the app isn't using standard query parsing.</p>
+    </div>
+
+    <div class="test">
+      <span class="label">D &middot; UK national format</span><br>
+      <a href="https://app.ringcentral.com/r/dialer?number=07700900123" target="_blank" rel="noopener" data-test="D">https://app.ringcentral.com/r/dialer?number=07700900123</a>
+      <p class="expect">Tests whether the app normalises a local trunk-prefixed number rather than requiring E.164.</p>
+    </div>
+
+    <h2>Control</h2>
+
+    <div class="test">
+      <span class="label">E &middot; dialer with no number</span><br>
+      <a href="https://app.ringcentral.com/r/dialer" target="_blank" rel="noopener" data-test="E">https://app.ringcentral.com/r/dialer</a>
+      <p class="expect">Proves the <code>/r/dialer</code> route itself resolves in the PWA. <strong>If this errors, the route is unsupported in the web app</strong> and no number format will help &mdash; that result matters more than A&ndash;D.</p>
     </div>
 
     <h2>Environment diagnostics</h2>
@@ -163,8 +154,7 @@
       ['Display mode', standalone ? 'standalone' : minimalUi ? 'minimal-ui' : browserMode ? 'browser' : 'unknown'],
       ['Platform', navigator.platform || 'n/a'],
       ['User agent', navigator.userAgent],
-      ['Page origin', location.origin],
-      ['Registered protocol API', 'registerProtocolHandler' in navigator ? 'available' : 'unavailable']
+      ['Page origin', location.origin]
     ];
 
     document.getElementById('diag').innerHTML = rows
@@ -184,17 +174,15 @@
 
     document.querySelectorAll('a[data-test]').forEach(function (a) {
       a.addEventListener('click', function () {
-        // Elapsed page time, not wall-clock — avoids needing a real timestamp.
+        var href = a.getAttribute('href');
         var t = (performance.now() / 1000).toFixed(1);
-        stamp('[' + t + 's] clicked ' + a.dataset.test + ' -> ' + a.getAttribute('href'));
-      });
-    });
+        stamp('[' + t + 's] clicked ' + a.dataset.test + ' -> ' + href);
 
-    // A blocked or unhandled custom scheme usually leaves the page visible with
-    // no error of any kind; a successful handoff normally blurs or hides it.
-    window.addEventListener('blur', function () { stamp('  ...window lost focus (an app may have opened)'); });
-    document.addEventListener('visibilitychange', function () {
-      stamp('  ...page became ' + document.visibilityState);
+        // Show what a standard parser actually extracts from the query string —
+        // this is what makes variant C's space visible rather than invisible.
+        var parsed = new URL(href, location.href).searchParams.get('number');
+        stamp('        app receives number = ' + (parsed === null ? '(none)' : JSON.stringify(parsed)));
+      });
     });
 
     document.getElementById('copy').addEventListener('click', function () {
