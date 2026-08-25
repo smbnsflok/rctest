@@ -3,24 +3,208 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
-  <meta name="description" content="">
+  <title>RingCentral Click-to-Dial Test</title>
+  <meta name="description" content="Diagnostic page for RingCentral click-to-dial link handling">
+  <style>
+    :root {
+      --bg: #ffffff; --fg: #1a1a1a; --muted: #666; --line: #e0e0e0;
+      --card: #f7f7f8; --accent: #0b5cad; --warn-bg: #fff8e6; --warn-line: #e0c068;
+      --ok: #1a7f4b; --bad: #b3261e;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #16171a; --fg: #e8e8ea; --muted: #9a9aa0; --line: #303136;
+        --card: #1e2024; --accent: #6fb3f2; --warn-bg: #2a2417; --warn-line: #6b5a2a;
+        --ok: #5cc98a; --bad: #f2837a;
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #16171a; --fg: #e8e8ea; --muted: #9a9aa0; --line: #303136;
+      --card: #1e2024; --accent: #6fb3f2; --warn-bg: #2a2417; --warn-line: #6b5a2a;
+      --ok: #5cc98a; --bad: #f2837a;
+    }
+    :root[data-theme="light"] {
+      --bg: #ffffff; --fg: #1a1a1a; --muted: #666; --line: #e0e0e0;
+      --card: #f7f7f8; --accent: #0b5cad; --warn-bg: #fff8e6; --warn-line: #e0c068;
+      --ok: #1a7f4b; --bad: #b3261e;
+    }
+
+    body {
+      background: var(--bg); color: var(--fg);
+      font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      margin: 0; padding: 0 20px;
+    }
+    main { max-width: 780px; margin: 40px auto 80px; }
+    h1 { font-size: 1.6rem; margin: 0 0 6px; }
+    h2 { font-size: 1.1rem; margin: 36px 0 4px; }
+    .sub { color: var(--muted); margin: 0 0 28px; }
+    .hint { color: var(--muted); font-size: 0.9rem; margin: 2px 0 14px; }
+
+    .test {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: 8px; padding: 16px; margin: 0 0 14px;
+    }
+    .test a {
+      color: var(--accent); font-weight: 600; font-size: 1.05rem;
+      word-break: break-all;
+    }
+    code {
+      font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+      background: var(--bg); border: 1px solid var(--line);
+      padding: 1px 5px; border-radius: 4px; word-break: break-all;
+    }
+    .label {
+      display: inline-block; font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 6px;
+    }
+    .expect { font-size: 0.9rem; color: var(--muted); margin: 10px 0 0; }
+
+    .note {
+      background: var(--warn-bg); border: 1px solid var(--warn-line);
+      border-radius: 8px; padding: 12px 16px; margin: 0 0 14px; font-size: 0.92rem;
+    }
+
+    table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+    td { padding: 5px 10px 5px 0; vertical-align: top; border-bottom: 1px solid var(--line); }
+    td:first-child { color: var(--muted); white-space: nowrap; width: 1%; }
+    td:last-child { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; }
+    .yes { color: var(--ok); font-weight: 700; }
+    .no { color: var(--bad); font-weight: 700; }
+
+    #log {
+      background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+      padding: 12px 16px; min-height: 60px;
+      font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+      white-space: pre-wrap; word-break: break-all;
+    }
+    #log:empty::before { content: "No links clicked yet."; color: var(--muted); }
+    .scroll { overflow-x: auto; }
+    button {
+      font: inherit; font-size: 0.9rem; padding: 6px 14px; cursor: pointer;
+      background: var(--bg); color: var(--fg);
+      border: 1px solid var(--line); border-radius: 6px; margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <nav>
-      <a href="#main">Skip to content</a>
-    </nav>
-  </header>
+  <main id="main">
+    <h1>RingCentral Click-to-Dial Test</h1>
+    <p class="sub">Click each link in order and note what happens. Screenshot the diagnostics and click log at the bottom when finished.</p>
 
-  <main id="main" style="max-width: 1120px; margin: 40px auto;">
-    <h1>Ring Central Callout Test</h1>
-    <p>Number: <a href="rcapp://r/dialer?number=%2B447700100100">+447700100100</a> - with space reference</p>
-    <p>Number: <a href="rcapp://r/dialer?number=447700100100">+447700100100</a> - with stripped space</p>
+    <h2>1 &mdash; Desktop app scheme (<code>rcapp://</code>)</h2>
+    <p class="hint">Only works if the RingCentral <strong>desktop</strong> app is installed. A PWA cannot register this scheme.</p>
+
+    <div class="test">
+      <span class="label">1a &middot; encoded plus</span><br>
+      <a href="rcapp://r/dialer?number=%2B447700900123" data-test="1a">rcapp://r/dialer?number=%2B447700900123</a>
+      <p class="expect">Expected if desktop app present: RingCentral opens with the number in the dialer.</p>
+    </div>
+
+    <div class="test">
+      <span class="label">1b &middot; no plus</span><br>
+      <a href="rcapp://r/dialer?number=447700900123" data-test="1b">rcapp://r/dialer?number=447700900123</a>
+      <p class="expect">Tests whether the leading + is required in the parameter.</p>
+    </div>
+
+    <div class="test">
+      <span class="label">1c &middot; alternate path</span><br>
+      <a href="rcapp://r/call?number=%2B447700900123" data-test="1c">rcapp://r/call?number=%2B447700900123</a>
+      <p class="expect">The dialer route may be <code>r/call</code> rather than <code>r/dialer</code> &mdash; unconfirmed, testing both.</p>
+    </div>
+
+    <h2>2 &mdash; Telephone scheme (<code>tel:</code>)</h2>
+    <p class="hint">Routes to the OS default telephony handler. RingCentral's PWA manifest does <strong>not</strong> declare a <code>tel:</code> protocol handler, so this will likely open FaceTime on macOS.</p>
+
+    <div class="test">
+      <span class="label">2a &middot; tel with plus</span><br>
+      <a href="tel:+447700900123" data-test="2a">tel:+447700900123</a>
+      <p class="expect">Note <em>which application</em> opens &mdash; that identifies the current OS default.</p>
+    </div>
+
+    <h2>3 &mdash; Web / PWA links (<code>https://</code>)</h2>
+    <p class="hint">The RingCentral PWA manifest declares no <code>scope</code>, so it defaults to the whole <code>app.ringcentral.com</code> origin. If the PWA is installed, links to that origin should open <em>inside the PWA window</em> rather than a browser tab.</p>
+
+    <div class="test">
+      <span class="label">3a &middot; control &mdash; origin root</span><br>
+      <a href="https://app.ringcentral.com/" target="_blank" rel="noopener" data-test="3a">https://app.ringcentral.com/</a>
+      <p class="expect"><strong>This is the key test.</strong> Did it open in the standalone PWA window, or in a normal browser tab? That tells us whether PWA link capture works at all on this machine.</p>
+    </div>
+
+    <div class="test">
+      <span class="label">3b &middot; candidate dialer deeplink &mdash; unverified</span><br>
+      <a href="https://app.ringcentral.com/dialer?number=%2B447700900123" target="_blank" rel="noopener" data-test="3b">https://app.ringcentral.com/dialer?number=%2B447700900123</a>
+      <p class="expect">This URL format is a <strong>guess</strong> and is not from RingCentral's documentation. A 404 or a redirect to the main app is the expected failure &mdash; it does not invalidate test 3a.</p>
+    </div>
+
+    <div class="note">
+      <strong>Note on 3b:</strong> replace this URL once the documented deeplink format is confirmed. If no such URL exists, server-side RingOut via the REST API is the only client-agnostic route.
+    </div>
+
+    <h2>Environment diagnostics</h2>
+    <div class="scroll"><table id="diag"></table></div>
+
+    <h2>Click log</h2>
+    <div id="log"></div>
+    <button id="copy">Copy diagnostics + log</button>
   </main>
 
-  <footer>
-    <p>&copy; 2026</p>
-  </footer>
+  <script>
+    // --- Environment detection -------------------------------------------
+    var standalone = window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true;
+    var minimalUi = window.matchMedia('(display-mode: minimal-ui)').matches;
+    var browserMode = window.matchMedia('(display-mode: browser)').matches;
+
+    var rows = [
+      ['Running as PWA', standalone
+        ? '<span class="yes">YES &mdash; standalone window</span>'
+        : '<span class="no">NO &mdash; ordinary browser tab</span>'],
+      ['Display mode', standalone ? 'standalone' : minimalUi ? 'minimal-ui' : browserMode ? 'browser' : 'unknown'],
+      ['Platform', navigator.platform || 'n/a'],
+      ['User agent', navigator.userAgent],
+      ['Page origin', location.origin],
+      ['Registered protocol API', 'registerProtocolHandler' in navigator ? 'available' : 'unavailable']
+    ];
+
+    document.getElementById('diag').innerHTML = rows
+      .map(function (r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>'; })
+      .join('');
+
+    // --- Click logging ----------------------------------------------------
+    // Clinicians won't have DevTools open, so mirror everything onto the page.
+    var log = document.getElementById('log');
+    var entries = [];
+
+    function stamp(msg) {
+      entries.push(msg);
+      log.textContent = entries.join('\n');
+      console.log('[rc-test]', msg);
+    }
+
+    document.querySelectorAll('a[data-test]').forEach(function (a) {
+      a.addEventListener('click', function () {
+        // Elapsed page time, not wall-clock — avoids needing a real timestamp.
+        var t = (performance.now() / 1000).toFixed(1);
+        stamp('[' + t + 's] clicked ' + a.dataset.test + ' -> ' + a.getAttribute('href'));
+      });
+    });
+
+    // A blocked or unhandled custom scheme usually leaves the page visible with
+    // no error of any kind; a successful handoff normally blurs or hides it.
+    window.addEventListener('blur', function () { stamp('  ...window lost focus (an app may have opened)'); });
+    document.addEventListener('visibilitychange', function () {
+      stamp('  ...page became ' + document.visibilityState);
+    });
+
+    document.getElementById('copy').addEventListener('click', function () {
+      var text = rows.map(function (r) {
+        return r[0] + ': ' + r[1].replace(/<[^>]+>/g, '');
+      }).join('\n') + '\n\n--- click log ---\n' + (entries.join('\n') || '(none)');
+      navigator.clipboard.writeText(text).then(function () {
+        document.getElementById('copy').textContent = 'Copied';
+      });
+    });
+  </script>
 </body>
 </html>
